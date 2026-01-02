@@ -6,14 +6,12 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 	"yxy-go/internal/logic/electricity"
 	"yxy-go/internal/svc"
 	"yxy-go/internal/types"
 
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/basicService/subscribeMessage/request"
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/kernel/power"
-	"github.com/redis/go-redis/v9"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
 )
@@ -112,9 +110,9 @@ func (l *SendLowBatteryAlertLogic) processSubscription(subscription Subscription
 	}
 	mpResp, err := l.svcCtx.MiniProgram.SubscribeMessage.Send(l.ctx, &request.RequestSubscribeMessageSend{
 		ToUser:           subscription.OpenID,
-		TemplateID:       l.svcCtx.Config.MiniProgram.TemplateID,
+		TemplateID:       l.svcCtx.Config.LowBattery.MiniProgram.TemplateID,
 		Page:             "/pages/electricity/index",
-		MiniProgramState: l.svcCtx.Config.MiniProgram.State,
+		MiniProgramState: l.svcCtx.Config.LowBattery.MiniProgram.State,
 		Lang:             "zh_CN",
 		Data: &power.HashMap{
 			"character_string1": power.StringMap{ // 剩余电量
@@ -177,34 +175,9 @@ func (l *SendLowBatteryAlertLogic) resetSubscriptionCount(id int64) error {
 }
 
 func (l *SendLowBatteryAlertLogic) getElecSurplus(yxyUID, campus string) (*types.GetElectricitySurplusResp, error) {
-	token, err := l.getElecAuthToken(yxyUID)
-	if err != nil {
-		return nil, err
-	}
 	surplusLogic := electricity.NewGetElectricitySurplusLogic(l.ctx, l.svcCtx)
 	return surplusLogic.GetElectricitySurplus(&types.GetElectricitySurplusReq{
-		Token:  token,
+		Uid:    yxyUID,
 		Campus: campus,
 	})
-}
-
-func (l *SendLowBatteryAlertLogic) getElecAuthToken(yxyUID string) (string, error) {
-	cacheKey := "elec:auth_token:" + yxyUID
-	cachedToken, err := l.svcCtx.Rdb.Get(l.ctx, cacheKey).Result()
-	if errors.Is(err, redis.Nil) {
-		authLogic := electricity.NewGetElectricityAuthLogic(l.ctx, l.svcCtx)
-		resp, err := authLogic.GetElectricityAuth(&types.GetElectricityAuthReq{
-			UID: yxyUID,
-		})
-		if err != nil {
-			return "", err
-		}
-		if err := l.svcCtx.Rdb.Set(l.ctx, cacheKey, resp.Token, 7*24*time.Hour).Err(); err != nil {
-			return "", err
-		}
-		return resp.Token, nil
-	} else if err != nil {
-		return "", err
-	}
-	return cachedToken, nil
 }

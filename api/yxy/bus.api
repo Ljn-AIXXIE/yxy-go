@@ -1,0 +1,81 @@
+syntax = "v1"
+
+info (
+	title:   "易校园校车接口"
+	author:  "Zerohzzzz"
+	date:    "2025 年 2 月 18 日"
+	version: "v1"
+)
+// 校车信息
+type (
+	BusTime {
+		DepartureTime string `json:"departure_time"`
+		RemainSeats   int    `json:"remain_seats"`
+		OrderedSeats  int    `json:"ordered_seats"`
+	}
+	BusInfo {
+        ID       string       `json:"id"`
+		Name     string       `json:"name"`
+		Price    int          `json:"price"`
+		Stations []string `json:"stations"`
+		BusTime  []BusTime    `json:"bus_time"`
+	}
+	GetBusInfoReq {
+		Search   string `form:"search,optional"`
+	}
+	GetBusInfoResp {
+        UpdatedAt string `json:"updated_at"`
+		List []BusInfo   `json:"list"`
+	}
+)
+
+// 乘车记录
+type (
+	BusRecord {
+		ID            string `json:"id"`
+		Name          string `json:"name"`
+		PayTime       string `json:"pay_time"`
+		DepartureTime string `json:"departure_time"`
+	}
+	GetBusRecordReq {
+		Uid    string `form:"uid"`
+        Page     int    `form:"page,optional" default:"1"`
+        PageSize int    `form:"page_size,optional" default:"100"`
+	}
+	GetBusRecordResp {
+		List []BusRecord `json:"list"`
+	}
+)
+
+// 已约车票
+type (
+    GetBusReservationReq{
+        Uid    string `form:"uid"`
+        Page     int    `form:"page,optional" default:"1"`
+        PageSize int    `form:"page_size,optional" default:"100"`
+    }
+
+    GetBusReservationResp {
+        List []BusRecord `json:"list"`
+    }
+)
+
+// 校车公告
+type (
+    BusAnnouncement {
+        Title       string `json:"title"`
+        Author      string `json:"author"`
+        PublishedAt string `json:"published_at"`
+        Abstract    string `json:"abstract"`
+        Content     []string `json:"content"`
+    }
+    GetBusAnnouncementReq {
+        Page     int    `form:"page,optional" default:"1"`
+        PageSize int    `form:"page_size,optional" default:"10"`
+    }
+    GetBusAnnouncementResp {
+        UpdatedAt string `json:"updated_at"`
+        Total int64 `json:"total"`
+        List []BusAnnouncement `json:"list"`
+    }
+)
